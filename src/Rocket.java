@@ -801,6 +801,8 @@ public class Rocket extends JFrame {
                     screen = POPUP;
                     if (score > hiscore) {
                         this.hi.setVisible(true);
+                    }else {
+                        frameCount = 501;
                     }
                 }
                 else if (frameCount== 500) {

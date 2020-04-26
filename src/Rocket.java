@@ -618,13 +618,14 @@ public class Rocket extends JFrame {
                     for (int i = 0; i < shields.length; i++) {
                         shields[i].draw(g);
                     }
+                    if (!(explosion != null && explosion.getCount() >= 254 )) {
                     background = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
                     for(int y = 0; y < height; y++) {
                         for(int x = 0; x < width; x++) {
                             background.setRGB(x, y, buffer.getRGB(x, y));
                         }
                     }
-
+                    }
 
                 } else {
                     g.drawImage(background, 0, 0, width, height, null);

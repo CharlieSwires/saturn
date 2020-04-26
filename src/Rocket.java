@@ -44,6 +44,8 @@ public class Rocket extends JFrame {
     private static int width = 500;
     private static final int SCALE_X = 25;
     private static final int SCALE_Y = 20;
+    private static final int SCALE_X_MYSTERY = 35;
+    private static final int SCALE_Y_MYSTERY = 20;
     private static final int FODDER_WIDTH = 15;
     private static final int FODDER_HEIGHT = 10;
     private static final int OFFSET_CRAFT_X = 50;
@@ -432,16 +434,30 @@ public class Rocket extends JFrame {
         }
 
         public boolean collision(double x, double y) {
-            double rsqr = (this.x+ SCALE_X / 2.0 - x)*(this.x+ SCALE_X / 2.0 - x)+
-                    (this.y+ SCALE_Y / 2.0 - y)*(this.y+ SCALE_Y / 2.0 - y);
-            return rsqr <= (SCALE_X/2.0)*(SCALE_X/2.0);
+            double rsqr;
+            
+            if (craftType == CraftEnum.MYSTERY) {
+                rsqr = (this.x+ SCALE_X_MYSTERY / 2.0 - x)*(this.x+ SCALE_X_MYSTERY / 2.0 - x)+
+                        (this.y+ SCALE_Y_MYSTERY / 2.0 - y)*(this.y+ SCALE_Y_MYSTERY / 2.0 - y);
+                return rsqr <= (SCALE_X_MYSTERY/2.0)*(SCALE_X_MYSTERY/2.0);
+
+            } else {
+                rsqr = (this.x+ FODDER_WIDTH / 2.0 - x)*(this.x+ FODDER_WIDTH / 2.0 - x)+
+                        (this.y+ FODDER_HEIGHT / 2.0 - y)*(this.y+ FODDER_HEIGHT / 2.0 - y);
+                return rsqr <= (FODDER_WIDTH/2.0)*(FODDER_WIDTH/2.0);
+
+            }
         }
 
         public void draw(Graphics g) {
             if(ib != null) {
-
-                g.drawImage(ib[selected],this.getX(), this.getY(), 
-                        FODDER_WIDTH, FODDER_HEIGHT, null);
+                if (craftType == CraftEnum.MYSTERY) {
+                    g.drawImage(ib[selected],this.getX(), this.getY(), 
+                            SCALE_X_MYSTERY, SCALE_Y_MYSTERY, null);
+                }else {
+                    g.drawImage(ib[selected],this.getX(), this.getY(), 
+                            FODDER_WIDTH, FODDER_HEIGHT, null);
+                }
             }
 
         }
@@ -600,6 +616,8 @@ public class Rocket extends JFrame {
     }
     Color c;
     BufferedImage background = null;
+    Craft mysteryCraft = null;
+
     public void paint(Graphics g) {
         Graphics screengc = null;
 
@@ -632,6 +650,7 @@ public class Rocket extends JFrame {
                     g.drawImage(background, 0, 0, width, height, null);
                 }
                 //draw fodder
+                if(mysteryCraft != null)mysteryCraft.draw(g);
                 for (int row = 0; row < fodder.length; row++) {
                     for (int i = 0; i < fodder[row].length; i++) {
                         fodder[row][i].draw(g);
@@ -758,6 +777,10 @@ public class Rocket extends JFrame {
                 boolean clearedLevel = false;
                 do {
                     background = null;
+                    
+                    int mystery = (int)(Math.random() * 500.0);
+                    int mysteryDirection = -6;
+                    mysteryCraft = null;
                     while(shipCount > 0 && !clearedLevel) {
                         position += right;
                         if (position >= 150) {
@@ -842,6 +865,31 @@ public class Rocket extends JFrame {
                                     break;
                                 }
                             }
+                        mystery--;
+                        if (mystery <= 0) {
+                            if(mysteryCraft == null) {
+                                mysteryCraft = new Craft(CraftEnum.MYSTERY, 500, 60);
+                            } else {
+                                if (mysteryCraft.getX() <= 50) {
+                                    mysteryDirection = 6;
+                                }
+                                mysteryCraft.setX(mysteryCraft.getX() + mysteryDirection);
+                                if (bullets[0] != null && mysteryCraft.collision(bullets[0].getX(), bullets[0].getY())) {
+                                    score += (int)(Math.random() * 500.0);
+                                    explosion = new Explosion(bullets[0].getX(), bullets[0].getY());
+                                    bullets[0] = null;
+                                    mysteryCraft = null;
+                                    mysteryDirection = -6;
+
+                                }
+                                if (mysteryCraft != null && mysteryCraft.getX() >= 550){
+                                    mystery = (int)(Math.random() * 500.0);
+                                    mysteryCraft = null;
+                                    mysteryDirection = -6;
+
+                                }
+                            }
+                        }
                         try {
                             this.sleep(tick);
                         } catch (InterruptedException e) {

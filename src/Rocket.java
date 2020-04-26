@@ -81,15 +81,15 @@ public class Rocket extends JFrame {
     double speed = 1.0;
     int gunDirectionA;
     int gunDirectionD;
-    
+
     class HiScores {
-        
+
         /**
          * 
          */
         private static final long serialVersionUID = 1;
         private List<ScoreName> last10Hiscores;
-        
+
         public void load() throws IOException, ClassNotFoundException {
             File scores = new File("scores.bin");
             FileInputStream is = new FileInputStream(scores);
@@ -119,9 +119,9 @@ public class Rocket extends JFrame {
             for(byte tb : temp) {
                 temp[index2]=bs[index2++];
             }
-            
+
             setLast10Hiscores(deserialize(temp));
-      }
+        }
         List<ScoreName> deserialize(byte[] temp) {
             char[] chars = new char[temp.length];
             int index = 0;
@@ -143,7 +143,7 @@ public class Rocket extends JFrame {
             }
             return list;
         }
-        
+
         public void save() throws IOException {
             byte[] bs = serialize(last10Hiscores);
             byte[] temp = new byte[bs.length];
@@ -151,7 +151,7 @@ public class Rocket extends JFrame {
             Random generator = new Random(73890);
             while(index < bs.length) {
                 temp[index] = (byte)(0xff & (bs[index++] ^ ((int)(generator.nextDouble() * 255.0))));
- 
+
             } 
 
             File scores = new File("scores.bin");
@@ -162,9 +162,9 @@ public class Rocket extends JFrame {
             }
             os.flush();
             os.close();
-            
+
         }
- 
+
         byte[] serialize(List<ScoreName> last10Hiscores) {
             return last10Hiscores.toString().getBytes();
         }
@@ -428,9 +428,9 @@ public class Rocket extends JFrame {
             this.y = y;
         }
 
-//        public BufferedImage[] getIb() {
-//            return ib;
-//        }
+        //        public BufferedImage[] getIb() {
+        //            return ib;
+        //        }
 
         public void setIb(BufferedImage[] ib) {
             this.ib = ib;
@@ -444,11 +444,11 @@ public class Rocket extends JFrame {
 
         public void draw(Graphics g) {
             if(ib != null) {
-                
+
                 g.drawImage(ib[selected],this.getX(), this.getY(), 
                         FODDER_WIDTH, FODDER_HEIGHT, null);
             }
-            
+
         }
 
         public boolean getIsDisplayed() {
@@ -503,9 +503,9 @@ public class Rocket extends JFrame {
         private BufferedImage bi = null;
         private int x;
         private int y;
-//        public BufferedImage getBi() {
-//            return bi;
-//        }
+        //        public BufferedImage getBi() {
+        //            return bi;
+        //        }
         public void setBi(BufferedImage bi) {
             this.bi = bi;
         }
@@ -535,19 +535,11 @@ public class Rocket extends JFrame {
     class Bullet {
         public Bullet(int x, int y) {
             super();
-            bi = new BufferedImage(1,1,BufferedImage.TYPE_INT_RGB);
             this.x = x;
             this.y = y;
         }
-        private BufferedImage bi = null;
         private int x;
         private int y;
-        public BufferedImage getBi() {
-            return bi;
-        }
-        public void setBi(BufferedImage bi) {
-            this.bi = bi;
-        }
         public int getX() {
             return x;
         }
@@ -559,6 +551,18 @@ public class Rocket extends JFrame {
         }
         public void setY(int y) {
             this.y = y;
+        }
+        public void drawFriendly(Graphics g) {
+            c = Color.RED;
+            g.setColor(c);
+            g.drawLine(getX(), getY(), getX(), getY()-5);
+
+        }
+        public void drawEnemy(Graphics g) {
+            c = Color.YELLOW;
+            g.setColor(c);
+            g.drawLine(getX(), getY(), getX(), getY()+5);
+
         }
     }
 
@@ -596,7 +600,7 @@ public class Rocket extends JFrame {
                 for (int row = 0; row < fodder.length; row++) {
                     for (int i = 0; i < fodder[row].length; i++) {
                         fodder[row][i].draw(g);
-                     }
+                    }
                 }
                 //            //draw shields
                 //            for (int i = 0; i < shields.length; i++) {
@@ -609,16 +613,13 @@ public class Rocket extends JFrame {
 
                 //draw bullets
                 if(bullets[0] != null) {
-                    c = Color.RED;
-                    g.setColor(c);
-                    g.drawLine(bullets[0].getX(), bullets[0].getY(), bullets[0].getX(), bullets[0].getY()-5);
+                    bullets[0].drawFriendly(g);
                 }
 
                 for (int i = 1; i <bullets.length; i++) {
                     if(bullets[i] != null) {
-                        c = Color.YELLOW;
-                        g.setColor(c);
-                        g.drawLine(bullets[i].getX(), bullets[i].getY(), bullets[i].getX(), bullets[i].getY()+5);
+                        bullets[i].drawEnemy(g);
+
                     }
 
                 }
@@ -654,7 +655,7 @@ public class Rocket extends JFrame {
                 c = Color.WHITE;
                 g.setColor(c);
                 g.drawString("HI SCORES", width /2 -40, 70);
-                
+
                 for (int i = 0; i < 10;i++) {
                     g.drawLine(width /2 -100, i * 30 + 100,width /2 +100, i * 30 + 100);
                     int lastFirst = last10Hiscores != null && last10Hiscores.size() > 0 ? last10Hiscores.size() - i -1:0;
@@ -706,7 +707,6 @@ public class Rocket extends JFrame {
             try {
                 george.save();
             } catch (IOException e1) {
-                // TODO Auto-generated catch block
                 e1.printStackTrace();
             }
             setVisible(false);

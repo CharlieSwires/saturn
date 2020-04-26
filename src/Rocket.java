@@ -58,7 +58,7 @@ public class Rocket extends JFrame {
     private static final int NOMINAL = 1;
     private static final int POPUP = 4;
     private int screen = NOMINAL;
-    Image buffer = (Image) new BufferedImage(width,height,BufferedImage.TYPE_INT_RGB);
+    BufferedImage buffer = new BufferedImage(width,height,BufferedImage.TYPE_INT_RGB);
     Craft[][] fodder;
     Shield[] shields;
     Gun gun;
@@ -491,7 +491,7 @@ public class Rocket extends JFrame {
             if(getIb() != null) {
                 g.drawImage(getIb(),getX(), getY(), null);
             }
-            
+
         }      
     }
 
@@ -542,6 +542,7 @@ public class Rocket extends JFrame {
         }
         private int x;
         private int y;
+        private boolean hitShields = false;
         public int getX() {
             return x;
         }
@@ -558,13 +559,30 @@ public class Rocket extends JFrame {
             c = Color.RED;
             g.setColor(c);
             g.drawLine(getX(), getY(), getX(), getY()-5);
+            Graphics g2 = background.getGraphics();
+            c = Color.BLACK;
+            g2.setColor(c);
+            hitShields = (background.getRGB(x, y) > Color.BLACK.getRGB());
+            g2.drawLine(getX(), getY(), getX(), getY()-5);
+
 
         }
         public void drawEnemy(Graphics g) {
             c = Color.YELLOW;
             g.setColor(c);
             g.drawLine(getX(), getY(), getX(), getY()+5);
+            Graphics g2 = background.getGraphics();
+            c = Color.BLACK;
+            g2.setColor(c);
+            hitShields = (background.getRGB(x, y) > Color.BLACK.getRGB());
+            g2.drawLine(getX(), getY(), getX(), getY()+5);
 
+        }
+        public boolean isHitShields() {
+            return hitShields;
+        }
+        public void setHitShields(boolean hitShields) {
+            this.hitShields = hitShields;
         }
     }
 
@@ -580,6 +598,7 @@ public class Rocket extends JFrame {
         return bifiles.get(filename);
     }
     Color c;
+    BufferedImage background = null;
     public void paint(Graphics g) {
         Graphics screengc = null;
 
@@ -593,16 +612,28 @@ public class Rocket extends JFrame {
                 c = explosion != null && explosion.getCount() >= 254 ? Color.YELLOW : Color.BLACK;
                 g.setColor(c);
 
-                g.fillRect(0, 0, width, height);
+                if (background == null) {
+                    g.fillRect(0, 0, width, height);
+                    //draw shields
+                    for (int i = 0; i < shields.length; i++) {
+                        shields[i].draw(g);
+                    }
+                    background = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+                    for(int y = 0; y < height; y++) {
+                        for(int x = 0; x < width; x++) {
+                            background.setRGB(x, y, buffer.getRGB(x, y));
+                        }
+                    }
+
+
+                } else {
+                    g.drawImage(background, 0, 0, width, height, null);
+                }
                 //draw fodder
                 for (int row = 0; row < fodder.length; row++) {
                     for (int i = 0; i < fodder[row].length; i++) {
                         fodder[row][i].draw(g);
                     }
-                }
-                //draw shields
-                for (int i = 0; i < shields.length; i++) {
-                shields[i].draw(g);
                 }
                 //draw gun
                 gun.draw(g);
@@ -722,6 +753,7 @@ public class Rocket extends JFrame {
             while (true) {
                 boolean clearedLevel = false;
                 do {
+                    background = null;
                     while(shipCount > 0 && !clearedLevel) {
                         position += right;
                         if (position >= 150) {
@@ -762,7 +794,10 @@ public class Rocket extends JFrame {
                                 explosion = new Explosion(bullets[0].getX(), bullets[0].getY());
                                 bullets[0]=null;
                             }
+                            if (bullets[0] != null && bullets[0].isHitShields()) {
+                                bullets[0]=null;
 
+                            }
                         } else if (fire) {
                             bullets[0]= new Bullet(gun.getX()+8,gun.getY());
                         }
@@ -775,6 +810,10 @@ public class Rocket extends JFrame {
                                     shipCount--;
                                     bullets[i] = null;
                                 }
+                                if (bullets[i] != null && bullets[i].isHitShields()) {
+                                    bullets[i]=null;
+
+                                }
                             } else {
                                 Craft naughtyOne = pointOfFire.get((int)(Math.random()*(pointOfFire.size()-1)));
                                 bullets[i] = new Bullet(naughtyOne.getX()+8,naughtyOne.getY());
@@ -782,7 +821,8 @@ public class Rocket extends JFrame {
                             if (bullets[i] != null && bullets[i].getY() >= height) {
                                 bullets[i] = null;
                             }
-                        }
+                            
+                       }
                         for (int i = 0; i < pointOfFire.size(); i++) {
                             if (gun.collision(pointOfFire.get(i).getX(), pointOfFire.get(i).getY())) {
                                 explosion = new Explosion(pointOfFire.get(i).getX(), pointOfFire.get(i).getY());

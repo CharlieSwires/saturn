@@ -116,7 +116,7 @@ public class Rocket extends JFrame {
             byte[] temp = new byte[--index+1];
             int index2 = 0;
 
-            for(byte tb : temp) {
+            for(@SuppressWarnings("unused") byte tb : temp) {
                 temp[index2]=bs[index2++];
             }
 
@@ -125,7 +125,7 @@ public class Rocket extends JFrame {
         List<ScoreName> deserialize(byte[] temp) {
             char[] chars = new char[temp.length];
             int index = 0;
-            for(char c : chars) {
+            for(@SuppressWarnings("unused") char c : chars) {
                 chars[index] = (char) temp[index++];
             }
             String fred = String.copyValueOf(chars);
@@ -176,7 +176,6 @@ public class Rocket extends JFrame {
             this.last10Hiscores = last10Hiscores;
         }
     }
-    @SuppressWarnings("unchecked")
     public Rocket() {
         super();
         try {
@@ -314,7 +313,7 @@ public class Rocket extends JFrame {
         BOTTOM_LINE(1);
 
         private int value;
-        private static Map map = new HashMap<>();
+        private static Map<Integer,CraftEnum> map = new HashMap<>();
 
         private CraftEnum(int value) {
             this.value = value;
@@ -375,7 +374,6 @@ public class Rocket extends JFrame {
         private CraftEnum craftType;
         private int x;
         private int y;
-        private int index = 0;
 
         public Craft(CraftEnum craftType, int x, int y) {
             super();
@@ -578,10 +576,6 @@ public class Rocket extends JFrame {
         return bifiles.get(filename);
     }
     Color c;
-    private boolean done= false;
-    private HiScorePanel hi;
-    private JFrame frame;
-
     public void paint(Graphics g) {
         Graphics screengc = null;
 
@@ -677,6 +671,11 @@ public class Rocket extends JFrame {
         }
     }
     class HiScorePanel extends JPanel implements ActionListener{
+        /**
+         * 
+         */
+        private static final long serialVersionUID = 1L;
+
         public HiScorePanel() {
             super();
             new JPanel(new BorderLayout());
@@ -716,6 +715,7 @@ public class Rocket extends JFrame {
     class MyThread extends Thread{
         HiScorePanel hi;
         long tick = 40;   
+        @SuppressWarnings("static-access")
         public void run() {
             while (true) {
                 boolean clearedLevel = false;
@@ -811,7 +811,6 @@ public class Rocket extends JFrame {
                 if (frameCount < 49)
                     screen = GAME_OVER;
                 else if (frameCount > 50 &&  frameCount < 500) {
-                    done= false;
                     screen = POPUP;
                     if (score > hiscore) {
                         this.hi.setVisible(true);

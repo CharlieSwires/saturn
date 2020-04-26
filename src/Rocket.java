@@ -428,9 +428,9 @@ public class Rocket extends JFrame {
             this.y = y;
         }
 
-        public BufferedImage[] getIb() {
-            return ib;
-        }
+//        public BufferedImage[] getIb() {
+//            return ib;
+//        }
 
         public void setIb(BufferedImage[] ib) {
             this.ib = ib;
@@ -440,6 +440,19 @@ public class Rocket extends JFrame {
             double rsqr = (this.x+ SCALE_X / 2.0 - x)*(this.x+ SCALE_X / 2.0 - x)+
                     (this.y+ SCALE_Y / 2.0 - y)*(this.y+ SCALE_Y / 2.0 - y);
             return rsqr <= (SCALE_X/2.0)*(SCALE_X/2.0);
+        }
+
+        public void draw(Graphics g) {
+            if(ib != null) {
+                
+                g.drawImage(ib[selected],this.getX(), this.getY(), 
+                        FODDER_WIDTH, FODDER_HEIGHT, null);
+            }
+            
+        }
+
+        public boolean getIsDisplayed() {
+            return ib !=null;
         }
     }
 
@@ -490,9 +503,9 @@ public class Rocket extends JFrame {
         private BufferedImage bi = null;
         private int x;
         private int y;
-        public BufferedImage getBi() {
-            return bi;
-        }
+//        public BufferedImage getBi() {
+//            return bi;
+//        }
         public void setBi(BufferedImage bi) {
             this.bi = bi;
         }
@@ -512,6 +525,11 @@ public class Rocket extends JFrame {
             double rsqr = (this.x+ SCALE_X / 2.0 - x)*(this.x+ SCALE_X / 2.0 - x)+
                     (this.y+ SCALE_Y / 2.0 - y)*(this.y+ SCALE_Y / 2.0 - y);
             return rsqr <= (SCALE_X/2.0)*(SCALE_X/2.0);
+        }
+        public void draw(Graphics g) {
+            if(bi != null) {
+                g.drawImage(bi,this.getX(), this.getY(),FODDER_WIDTH, FODDER_HEIGHT, null);
+            }        
         }
     }
     class Bullet {
@@ -577,11 +595,8 @@ public class Rocket extends JFrame {
                 //draw fodder
                 for (int row = 0; row < fodder.length; row++) {
                     for (int i = 0; i < fodder[row].length; i++) {
-                        if(fodder[row][i].getIb() != null) {
-                            g.drawImage(fodder[row][i].getIb()[selected],fodder[row][i].getX(), fodder[row][i].getY(), 
-                                    FODDER_WIDTH, FODDER_HEIGHT, null);
-                        }
-                    }
+                        fodder[row][i].draw(g);
+                     }
                 }
                 //            //draw shields
                 //            for (int i = 0; i < shields.length; i++) {
@@ -590,9 +605,8 @@ public class Rocket extends JFrame {
                 //                }
                 //            }
                 //draw gun
-                if(gun.getBi() != null) {
-                    g.drawImage(gun.getBi(),gun.getX(), gun.getY(),FODDER_WIDTH, FODDER_HEIGHT, null);
-                }
+                gun.draw(g);
+
                 //draw bullets
                 if(bullets[0] != null) {
                     c = Color.RED;
@@ -724,7 +738,7 @@ public class Rocket extends JFrame {
                         //draw fodder
                         for (int row = 0; row < fodder.length; row++) {
                             for (int i = 0; i < fodder[row].length; i++) {
-                                if(fodder[row][i].getIb() != null) {
+                                if(fodder[row][i].getIsDisplayed()) {
                                     fodder[row][i].setX(fodder[row][i].getX()+right);
                                     fodder[row][i].setY(fodder[row][i].getY()+down);
                                 }
@@ -837,7 +851,7 @@ public class Rocket extends JFrame {
         //draw fodder
         for (int row = fodder.length - 1; row >= 0; row--) {
             for (int i = 0; i < fodder[row].length; i++) {
-                if(fodder[row][i].getIb() != null && fodder[row][i].collision((double)x,(double)y)){
+                if(fodder[row][i].getIsDisplayed() && fodder[row][i].collision((double)x,(double)y)){
                     fodder[row][i].setIb(null);
                     pointOfFire.remove(fodder[row][i]);
                     return fodder[row][i];

@@ -331,17 +331,18 @@ public class Rocket extends JFrame {
     }
 
     class Explosion {
+        private static final int NO_POINTS = 200;
         private double x[] = null;
         private double y[] = null;
         private double dx[] = null;
         private double dy[] = null;
         private int count = 255;
         public Explosion(int x, int y) {
-            this.x = new double[100];
-            this.y = new double[100];
-            this.dx = new double[100];
-            this.dy = new double[100];
-            for (int i = 0; i < 100;i++) {
+            this.x = new double[NO_POINTS];
+            this.y = new double[NO_POINTS];
+            this.dx = new double[NO_POINTS];
+            this.dy = new double[NO_POINTS];
+            for (int i = 0; i < NO_POINTS;i++) {
                 this.x[i]=x;
                 this.y[i] =y;
                 double bearing = 2.0 * Math.PI * Math.random();
@@ -354,7 +355,7 @@ public class Rocket extends JFrame {
         void draw(Graphics g) {
             Color c = new Color(count,count,count--);
             g.setColor(c);
-            for (int i = 0; i < 100;i++) {
+            for (int i = 0; i < NO_POINTS;i++) {
                 g.drawLine((int)x[i], (int)y[i], (int)x[i], (int)y[i]);
                 this.x[i]+=dx[i];
                 this.y[i]+=dy[i];
@@ -619,12 +620,12 @@ public class Rocket extends JFrame {
                         shields[i].draw(g);
                     }
                     if (!(explosion != null && explosion.getCount() >= 254 )) {
-                    background = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-                    for(int y = 0; y < height; y++) {
-                        for(int x = 0; x < width; x++) {
-                            background.setRGB(x, y, buffer.getRGB(x, y));
+                        background = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+                        for(int y = 0; y < height; y++) {
+                            for(int x = 0; x < width; x++) {
+                                background.setRGB(x, y, buffer.getRGB(x, y));
+                            }
                         }
-                    }
                     }
 
                 } else {
@@ -723,24 +724,26 @@ public class Rocket extends JFrame {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            hiscore = score;
-            ScoreName sn = new ScoreName();
-            sn.score = hiscore;
-            sn.name = nameString.getText();
-            if (last10Hiscores.size() < 10) {
+            if (score > hiscore) {
+                hiscore = score;
+                ScoreName sn = new ScoreName();
+                sn.score = hiscore;
+                sn.name = nameString.getText();
+                if (last10Hiscores.size() < 10) {
 
-                last10Hiscores.add(sn);
-            } else {
-                last10Hiscores.remove(0);
-                last10Hiscores.add(sn);
+                    last10Hiscores.add(sn);
+                } else {
+                    last10Hiscores.remove(0);
+                    last10Hiscores.add(sn);
 
-            } 
-            HiScores george = new HiScores();
-            george.setLast10Hiscores(last10Hiscores);;
-            try {
-                george.save();
-            } catch (IOException e1) {
-                e1.printStackTrace();
+                } 
+                HiScores george = new HiScores();
+                george.setLast10Hiscores(last10Hiscores);;
+                try {
+                    george.save();
+                } catch (IOException e1) {
+                    e1.printStackTrace();
+                }
             }
             setVisible(false);
 
@@ -822,8 +825,8 @@ public class Rocket extends JFrame {
                             if (bullets[i] != null && bullets[i].getY() >= height) {
                                 bullets[i] = null;
                             }
-                            
-                       }
+
+                        }
                         for (int i = 0; i < pointOfFire.size(); i++) {
                             if (gun.collision(pointOfFire.get(i).getX(), pointOfFire.get(i).getY())) {
                                 explosion = new Explosion(pointOfFire.get(i).getX(), pointOfFire.get(i).getY());
@@ -834,11 +837,11 @@ public class Rocket extends JFrame {
                         clearedLevel  = pointOfFire.size() == 0;
                         if (pointOfFire.size() > 0)
                             for(Craft craft : pointOfFire) {
-                            if (craft.getY() >= 500) {
-                                shipCount = 0;
-                                break;
+                                if (craft.getY() >= 500) {
+                                    shipCount = 0;
+                                    break;
+                                }
                             }
-                        }
                         try {
                             this.sleep(tick);
                         } catch (InterruptedException e) {

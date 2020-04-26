@@ -48,9 +48,9 @@ public class Rocket extends JFrame {
     private static final int FODDER_HEIGHT = 10;
     private static final int OFFSET_CRAFT_X = 50;
     private static final int OFFSET_CRAFT_Y = 100;
-    private static final int SCALE_SHIELD_X = 0;
-    private static final int OFFSET_SHIELD_X = 0;
-    private static final int OFFSET_SHIELD_Y = 0;
+    private static final int SCALE_SHIELD_X = 150;
+    private static final int OFFSET_SHIELD_X = 50;
+    private static final int OFFSET_SHIELD_Y = 350;
     private static final int OFFSET_GUN_X = 50;
     private static final int OFFSET_GUN_Y = height -50;
     public static final int GAME_OVER = 2;
@@ -283,16 +283,12 @@ public class Rocket extends JFrame {
             pointOfFire.add(fodder[row][i]);
         }
 
-        //        //3 shields
-        //        for(int i = 0; i < shields.length; i++)
-        //            shields[i] = new Shield(SCALE_SHIELD_X*i+OFFSET_SHIELD_X,OFFSET_SHIELD_Y);
+        //3 shields
+        for(int i = 0; i < shields.length; i++)
+            shields[i] = new Shield(SCALE_SHIELD_X*i+OFFSET_SHIELD_X,OFFSET_SHIELD_Y);
 
         //gun
         gun  = new Gun(OFFSET_GUN_X, OFFSET_GUN_Y);
-
-        //5 bullets
-        //        for(int i = 0; i < bullets.length; i++)
-        //            bullets[i] = new Bullet(0,0);
 
 
     }
@@ -460,7 +456,7 @@ public class Rocket extends JFrame {
         private int y;
         public Shield(int x, int y) {
             super();
-            ib = readBI("shield.jpg");
+            ib = readBI("Shields.png");
             this.x = x;
             this.y = y;
         }
@@ -488,6 +484,14 @@ public class Rocket extends JFrame {
 
         public void setIb(BufferedImage ib) {
             this.ib = ib;
+        }
+
+
+        public void draw(Graphics g) {
+            if(getIb() != null) {
+                g.drawImage(getIb(),getX(), getY(), null);
+            }
+            
         }      
     }
 
@@ -596,12 +600,10 @@ public class Rocket extends JFrame {
                         fodder[row][i].draw(g);
                     }
                 }
-                //            //draw shields
-                //            for (int i = 0; i < shields.length; i++) {
-                //                if(shields[i].getIb() != null) {
-                //                    g.drawImage(shields[i].getIb(),shields[i].getX(), shields[i].getY(), null);
-                //                }
-                //            }
+                //draw shields
+                for (int i = 0; i < shields.length; i++) {
+                shields[i].draw(g);
+                }
                 //draw gun
                 gun.draw(g);
 

@@ -832,6 +832,13 @@ public class Rocket extends JFrame {
                             }
                         }
                         clearedLevel  = pointOfFire.size() == 0;
+                        if (pointOfFire.size() > 0)
+                            for(Craft craft : pointOfFire) {
+                            if (craft.getY() >= 500) {
+                                shipCount = 0;
+                                break;
+                            }
+                        }
                         try {
                             this.sleep(tick);
                         } catch (InterruptedException e) {

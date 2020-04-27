@@ -454,20 +454,15 @@ public class Rocket extends JFrame {
                 if (craftType == CraftEnum.MYSTERY) {
                     g.drawImage(ib[selected],this.getX(), this.getY(), 
                             SCALE_X_MYSTERY, SCALE_Y_MYSTERY, null);
-                    Graphics g2 = background.getGraphics();
-                    c = Color.BLACK;
-                    g2.setColor(c);
-                    g2.drawRect(this.getX(), this.getY(), 
-                            SCALE_X_MYSTERY, SCALE_Y_MYSTERY);
-               }else {
+                }else {
                     g.drawImage(ib[selected],this.getX(), this.getY(), 
                             FODDER_WIDTH, FODDER_HEIGHT, null);
                     Graphics g2 = background.getGraphics();
                     c = Color.BLACK;
                     if (g2 != null) {
                         g2.setColor(c);
-                        g2.drawRect(this.getX(), this.getY(), 
-                                FODDER_WIDTH+10, FODDER_HEIGHT);
+                        g2.fillRect(this.getX(), this.getY(), 
+                                FODDER_WIDTH, FODDER_HEIGHT);
                         
                     }
                }

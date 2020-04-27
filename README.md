@@ -2,6 +2,7 @@ Rocket
 ------
 Keys a,d and space - left, right and fire
 
+From cmd or git bash:
 java -classpath bin Rocket 
 
 from the saturn directory

@@ -2,7 +2,6 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Container;
 import java.awt.Graphics;
-import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -10,18 +9,12 @@ import java.awt.event.KeyListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
-import java.lang.reflect.InvocationTargetException;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +27,11 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+/**
+ * 
+ * @author charl
+ *
+ */
 public class Rocket extends JFrame {
 
     /**
@@ -84,6 +82,133 @@ public class Rocket extends JFrame {
     int gunDirectionA;
     int gunDirectionD;
 
+    /**
+     * 
+     */
+    public Rocket() {
+        super();
+        try {
+            HiScores george = new HiScores();
+            george.load();
+            this.last10Hiscores = george.getLast10Hiscores();
+            hiscore = this.last10Hiscores.get(this.last10Hiscores.size() - 1).score;
+        } catch (ClassNotFoundException | IOException | SecurityException  | IllegalArgumentException e1) {
+            System.out.println(e1.getMessage());
+        }
+        init();
+        addWindowListener(new WindowAdapter() {
+            public void windowClosing(WindowEvent e) {
+                System.exit(0);
+            }
+        });
+
+        addKeyListener(new KeyListener() {
+
+            @Override
+            public void keyTyped(KeyEvent e) {
+
+
+            }
+
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (e.getKeyChar() == 'a'||e.getKeyChar() == 'A') {
+                    gunDirectionA = -3;
+                }
+                if (e.getKeyChar() == 'd'||e.getKeyChar() == 'D') {
+                    gunDirectionD = 3;
+
+                }
+                gunDirection = gunDirectionA + gunDirectionD;
+                if (e.getKeyChar() == ' ') {
+                    fire  = true;
+
+                }
+
+            }
+
+            @Override
+            public void keyReleased(KeyEvent e) {
+                if (e.getKeyChar() == 'a'||e.getKeyChar() == 'A') {
+                    gunDirectionA = 0;
+                }
+                if (e.getKeyChar() == 'd'||e.getKeyChar() == 'D') {
+                    gunDirectionD = 0;
+
+                }
+                gunDirection = gunDirectionA + gunDirectionD;
+                if (e.getKeyChar() == ' ') {
+                    fire = false;
+
+                }
+
+
+            }
+
+        });
+    }
+    /**
+     * 
+     */
+    public void init() {
+
+        right = 1;
+        down = 0;
+        position = 0;
+        speed = 1.0;
+
+        shipCount = 3;
+        screen = NOMINAL;
+        pointOfFire = new ArrayList<Craft>();
+        fodder = new Craft[5][11];
+        shields = new Shield[3];
+        bullets = new Bullet[5];
+        fire = false;
+        gunDirectionA = 0;
+        gunDirectionD = 0;
+
+        score = 0;
+        //5rows x 11 columns
+        int row = 0;
+        for(int i = 0;i < fodder[row].length;i++) {
+            fodder[row][i] = new Craft(CraftEnum.TOP_LINE,SCALE_X*i+OFFSET_CRAFT_X,SCALE_Y*row+OFFSET_CRAFT_Y);
+            pointOfFire.add(fodder[row][i]);
+        }
+        row ++;
+        for(int i = 0;i < fodder[row].length;i++) {
+            fodder[row][i] = new Craft(CraftEnum.MIDDLE_LINE,SCALE_X*i+OFFSET_CRAFT_X,SCALE_Y*row+OFFSET_CRAFT_Y);
+            pointOfFire.add(fodder[row][i]);
+        }
+        row ++;
+        for(int i = 0;i < fodder[row].length;i++) {
+            fodder[row][i] = new Craft(CraftEnum.MIDDLE_LINE,SCALE_X*i+OFFSET_CRAFT_X,SCALE_Y*row+OFFSET_CRAFT_Y);
+            pointOfFire.add(fodder[row][i]);
+        }
+        row ++;
+        for(int i = 0;i < fodder[row].length;i++) {
+            fodder[row][i] = new Craft(CraftEnum.BOTTOM_LINE,SCALE_X*i+OFFSET_CRAFT_X,SCALE_Y*row+OFFSET_CRAFT_Y);
+            pointOfFire.add(fodder[row][i]);
+        }
+        row ++;
+        for(int i = 0;i < fodder[row].length;i++) {
+            fodder[row][i] = new Craft(CraftEnum.BOTTOM_LINE,SCALE_X*i+OFFSET_CRAFT_X,SCALE_Y*row+OFFSET_CRAFT_Y);
+            pointOfFire.add(fodder[row][i]);
+        }
+
+        //3 shields
+        for(int i = 0; i < shields.length; i++)
+            shields[i] = new Shield(SCALE_SHIELD_X*i+OFFSET_SHIELD_X,OFFSET_SHIELD_Y);
+
+        //gun
+        gun  = new Gun(OFFSET_GUN_X, OFFSET_GUN_Y);
+
+
+    }
+    /**
+     * 
+     * @author charl
+     *
+     */
     class HiScores {
 
         /**
@@ -178,123 +303,11 @@ public class Rocket extends JFrame {
             this.last10Hiscores = last10Hiscores;
         }
     }
-    public Rocket() {
-        super();
-        try {
-            HiScores george = new HiScores();
-            george.load();
-            this.last10Hiscores = george.getLast10Hiscores();
-            hiscore = this.last10Hiscores.get(this.last10Hiscores.size() - 1).score;
-        } catch (ClassNotFoundException | IOException | SecurityException  | IllegalArgumentException e1) {
-            System.out.println(e1.getMessage());
-        }
-        init();
-        addWindowListener(new WindowAdapter() {
-            public void windowClosing(WindowEvent e) {
-                System.exit(0);
-            }
-        });
-
-        addKeyListener(new KeyListener() {
-
-            @Override
-            public void keyTyped(KeyEvent e) {
-
-
-            }
-
-            @Override
-            public void keyPressed(KeyEvent e) {
-                if (e.getKeyChar() == 'a'||e.getKeyChar() == 'A') {
-                    gunDirectionA = -3;
-                }
-                if (e.getKeyChar() == 'd'||e.getKeyChar() == 'D') {
-                    gunDirectionD = 3;
-
-                }
-                gunDirection = gunDirectionA + gunDirectionD;
-                if (e.getKeyChar() == ' ') {
-                    fire  = true;
-
-                }
-
-            }
-
-            @Override
-            public void keyReleased(KeyEvent e) {
-                if (e.getKeyChar() == 'a'||e.getKeyChar() == 'A') {
-                    gunDirectionA = 0;
-                }
-                if (e.getKeyChar() == 'd'||e.getKeyChar() == 'D') {
-                    gunDirectionD = 0;
-
-                }
-                gunDirection = gunDirectionA + gunDirectionD;
-                if (e.getKeyChar() == ' ') {
-                    fire = false;
-
-                }
-
-
-            }
-
-        });
-    }
-    public void init() {
-
-        right = 1;
-        down = 0;
-        position = 0;
-        speed = 1.0;
-
-        shipCount = 3;
-        screen = NOMINAL;
-        pointOfFire = new ArrayList<Craft>();
-        fodder = new Craft[5][11];
-        shields = new Shield[3];
-        bullets = new Bullet[5];
-        fire = false;
-        gunDirectionA = 0;
-        gunDirectionD = 0;
-
-        score = 0;
-        //5rows x 11 columns
-        int row = 0;
-        for(int i = 0;i < fodder[row].length;i++) {
-            fodder[row][i] = new Craft(CraftEnum.TOP_LINE,SCALE_X*i+OFFSET_CRAFT_X,SCALE_Y*row+OFFSET_CRAFT_Y);
-            pointOfFire.add(fodder[row][i]);
-        }
-        row ++;
-        for(int i = 0;i < fodder[row].length;i++) {
-            fodder[row][i] = new Craft(CraftEnum.MIDDLE_LINE,SCALE_X*i+OFFSET_CRAFT_X,SCALE_Y*row+OFFSET_CRAFT_Y);
-            pointOfFire.add(fodder[row][i]);
-        }
-        row ++;
-        for(int i = 0;i < fodder[row].length;i++) {
-            fodder[row][i] = new Craft(CraftEnum.MIDDLE_LINE,SCALE_X*i+OFFSET_CRAFT_X,SCALE_Y*row+OFFSET_CRAFT_Y);
-            pointOfFire.add(fodder[row][i]);
-        }
-        row ++;
-        for(int i = 0;i < fodder[row].length;i++) {
-            fodder[row][i] = new Craft(CraftEnum.BOTTOM_LINE,SCALE_X*i+OFFSET_CRAFT_X,SCALE_Y*row+OFFSET_CRAFT_Y);
-            pointOfFire.add(fodder[row][i]);
-        }
-        row ++;
-        for(int i = 0;i < fodder[row].length;i++) {
-            fodder[row][i] = new Craft(CraftEnum.BOTTOM_LINE,SCALE_X*i+OFFSET_CRAFT_X,SCALE_Y*row+OFFSET_CRAFT_Y);
-            pointOfFire.add(fodder[row][i]);
-        }
-
-        //3 shields
-        for(int i = 0; i < shields.length; i++)
-            shields[i] = new Shield(SCALE_SHIELD_X*i+OFFSET_SHIELD_X,OFFSET_SHIELD_Y);
-
-        //gun
-        gun  = new Gun(OFFSET_GUN_X, OFFSET_GUN_Y);
-
-
-    }
-
+    /**
+     * 
+     * @author charl
+     *
+     */
     class ScoreName{
         public int score;
         public String name;
@@ -304,6 +317,11 @@ public class Rocket extends JFrame {
         }
 
     }
+    /**
+     * 
+     * @author charl
+     *
+     */
     enum CraftEnum {
         MYSTERY(0),
         TOP_LINE(30),
@@ -332,6 +350,11 @@ public class Rocket extends JFrame {
         }    
     }
 
+    /**
+     * 
+     * @author charl
+     *
+     */
     class Explosion {
         private static final int NO_POINTS = 200;
         private double x[] = null;
@@ -367,6 +390,11 @@ public class Rocket extends JFrame {
             return count;
         }
     }
+    /**
+     * 
+     * @author charl
+     *
+     */
     class Craft {
         private BufferedImage[] ib = new BufferedImage[2];
 
@@ -425,9 +453,6 @@ public class Rocket extends JFrame {
             this.y = y;
         }
 
-        //        public BufferedImage[] getIb() {
-        //            return ib;
-        //        }
 
         public void setIb(BufferedImage[] ib) {
             this.ib = ib;
@@ -435,7 +460,7 @@ public class Rocket extends JFrame {
 
         public boolean collision(double x, double y) {
             double rsqr;
-            
+
             if (craftType == CraftEnum.MYSTERY) {
                 rsqr = (this.x+ SCALE_X_MYSTERY / 2.0 - x)*(this.x+ SCALE_X_MYSTERY / 2.0 - x)+
                         (this.y+ SCALE_Y_MYSTERY / 2.0 - y)*(this.y+ SCALE_Y_MYSTERY / 2.0 - y);
@@ -464,11 +489,11 @@ public class Rocket extends JFrame {
                             g2.setColor(c);
                             g2.fillRect(this.getX(), this.getY(), 
                                     FODDER_WIDTH, FODDER_HEIGHT);
-                            
+
                         }
                     }
-                   
-               }
+
+                }
             }
 
         }
@@ -478,6 +503,11 @@ public class Rocket extends JFrame {
         }
     }
 
+    /**
+     * 
+     * @author charl
+     *
+     */
     class Shield {
         private BufferedImage ib = null;
         private int x;
@@ -523,6 +553,11 @@ public class Rocket extends JFrame {
         }      
     }
 
+    /**
+     * 
+     * @author charl
+     *
+     */
     class Gun {
         public Gun(int x, int y) {
             super();
@@ -562,6 +597,11 @@ public class Rocket extends JFrame {
             }        
         }
     }
+    /**
+     * 
+     * @author charl
+     *
+     */
     class Bullet {
         public Bullet(int x, int y) {
             super();
@@ -615,6 +655,12 @@ public class Rocket extends JFrame {
     }
 
     private static Map<String, BufferedImage> bifiles = new HashMap<>();
+
+    /**
+     * 
+     * @param filename
+     * @return
+     */
     private static BufferedImage readBI(String filename) {
         if(!bifiles.containsKey(filename)) {
             try {
@@ -629,6 +675,9 @@ public class Rocket extends JFrame {
     BufferedImage background = null;
     Craft mysteryCraft = null;
 
+    /**
+     * 
+     */
     public void paint(Graphics g) {
         Graphics screengc = null;
 
@@ -735,6 +784,11 @@ public class Rocket extends JFrame {
             screengc.drawImage(buffer, 0, 0, null);
         }
     }
+    /**
+     * 
+     * @author charl
+     *
+     */
     class HiScorePanel extends JPanel implements ActionListener{
         /**
          * 
@@ -779,6 +833,11 @@ public class Rocket extends JFrame {
 
         }
     }
+    /**
+     * 
+     * @author charl
+     *
+     */
     class MyThread extends Thread{
         HiScorePanel hi;
         long tick = 40;   
@@ -788,7 +847,7 @@ public class Rocket extends JFrame {
                 boolean clearedLevel = false;
                 do {
                     background = null;
-                    
+
                     int mystery = (int)(Math.random() * 500.0);
                     int mysteryDirection = -6;
                     mysteryCraft = null;
@@ -958,6 +1017,12 @@ public class Rocket extends JFrame {
         }
     }
 
+    /**
+     * 
+     * @param x
+     * @param y
+     * @return
+     */
     private Craft collision(int x, int y) {
         //draw fodder
         for (int row = fodder.length - 1; row >= 0; row--) {
@@ -972,6 +1037,10 @@ public class Rocket extends JFrame {
         }  
         return null;
     }
+    /**
+     * 
+     * @param args
+     */
     public static void main(String[] args) {
         Rocket app = new Rocket();
         Container cp = app.getContentPane();

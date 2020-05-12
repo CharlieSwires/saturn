@@ -28,6 +28,8 @@ import javax.swing.JPanel;
 import javax.swing.JTextField;
 
 /**
+ * You might wonder about the naming I was going to write a simulation (mathematical)
+ * for the Saturn rocket to orbit, I guess I changed my mind.
  * 
  * @author charl
  *
@@ -83,7 +85,7 @@ public class Rocket extends JFrame {
     int gunDirectionD;
 
     /**
-     * 
+     * Constructor used once
      */
     public Rocket() {
         super();
@@ -148,7 +150,7 @@ public class Rocket extends JFrame {
         });
     }
     /**
-     * 
+     * Used every game cycle sets up prey, predator and shields
      */
     public void init() {
 
@@ -205,6 +207,7 @@ public class Rocket extends JFrame {
 
     }
     /**
+     * Used for initialising the high score table file and maintaining it.
      * 
      * @author charl
      *
@@ -304,6 +307,7 @@ public class Rocket extends JFrame {
         }
     }
     /**
+     * Score name pair
      * 
      * @author charl
      *
@@ -318,6 +322,8 @@ public class Rocket extends JFrame {
 
     }
     /**
+     * Used in conjunction with the Craft class to allow the Craft class to be 
+     * general purpose well for four aliens and their scores.
      * 
      * @author charl
      *
@@ -351,6 +357,7 @@ public class Rocket extends JFrame {
     }
 
     /**
+     * This is for the animation of the explosions
      * 
      * @author charl
      *
@@ -391,6 +398,7 @@ public class Rocket extends JFrame {
         }
     }
     /**
+     * This is for the alien craft both draw and collide.
      * 
      * @author charl
      *
@@ -504,7 +512,8 @@ public class Rocket extends JFrame {
     }
 
     /**
-     * 
+     * Drawing of the shield.
+     *  
      * @author charl
      *
      */
@@ -554,6 +563,7 @@ public class Rocket extends JFrame {
     }
 
     /**
+     * Draw and collide for the gun.
      * 
      * @author charl
      *
@@ -598,6 +608,7 @@ public class Rocket extends JFrame {
         }
     }
     /**
+     * Draw enemy bullet and friend.
      * 
      * @author charl
      *
@@ -630,7 +641,7 @@ public class Rocket extends JFrame {
             Graphics g2 = background.getGraphics();
             c = Color.BLACK;
             g2.setColor(c);
-            hitShields = (background.getRGB(x, y) > Color.BLACK.getRGB());
+            hitShields = (background.getRGB(x, y) > Color.BLACK.getRGB());  //eat shields
             g2.drawLine(getX(), getY(), getX(), getY()-5);
 
 
@@ -642,7 +653,7 @@ public class Rocket extends JFrame {
             Graphics g2 = background.getGraphics();
             c = Color.BLACK;
             g2.setColor(c);
-            hitShields = (background.getRGB(x, y) > Color.BLACK.getRGB());
+            hitShields = (background.getRGB(x, y) > Color.BLACK.getRGB());  //eat shields
             g2.drawLine(getX(), getY(), getX(), getY()+5);
 
         }
@@ -657,6 +668,7 @@ public class Rocket extends JFrame {
     private static Map<String, BufferedImage> bifiles = new HashMap<>();
 
     /**
+     * Prevents common download of images happening they only happen once
      * 
      * @param filename
      * @return
@@ -676,6 +688,7 @@ public class Rocket extends JFrame {
     Craft mysteryCraft = null;
 
     /**
+     * Called each frame refresh to draw everything. Double buffered.
      * 
      */
     public void paint(Graphics g) {
@@ -785,6 +798,7 @@ public class Rocket extends JFrame {
         }
     }
     /**
+     * High score entry.
      * 
      * @author charl
      *
@@ -834,6 +848,7 @@ public class Rocket extends JFrame {
         }
     }
     /**
+     * This is the control logic the tick gets shorter and shorter if you get through a level
      * 
      * @author charl
      *
@@ -853,7 +868,7 @@ public class Rocket extends JFrame {
                     mysteryCraft = null;
                     while(shipCount > 0 && !clearedLevel) {
                         position += right;
-                        if (position >= 150) {
+                        if (position >= 150) {  //zig zag
                             right = -(int)speed;
                             down = 10;
                             speed+=0.3;
@@ -863,7 +878,7 @@ public class Rocket extends JFrame {
                             down = 10;
                             speed+=0.3;
                         }
-                        if(position%5 == 0) {
+                        if(position%5 == 0) {   //craft frame
                             selected = selected ^ 1;
                         }
                         //draw fodder
@@ -877,21 +892,23 @@ public class Rocket extends JFrame {
                         }  
                         down = 0;
 
+                        // gun
                         if (gun.getX()+gunDirection >= 50 && gun.getX()+gunDirection <= (width - 50))
                             gun.setX(gun.getX()+gunDirection);
 
+                        //bullets gun
                         if (bullets[0] != null) {
                             bullets[0].setY(bullets[0].getY() - 6);
-                            Craft hit = collision(bullets[0].getX(), bullets[0].getY());
-                            if (bullets[0].getY() <= 10) {
+                            Craft hit = collision(bullets[0].getX(), bullets[0].getY());    //hit enemy
+                            if (bullets[0].getY() <= 10) {  //top erase
                                 bullets[0] = null;
                             }
-                            if (hit != null) {
+                            if (hit != null) {  //hit true set off explosion
                                 score += hit.getCraftType().getValue();
                                 explosion = new Explosion(bullets[0].getX(), bullets[0].getY());
                                 bullets[0]=null;
                             }
-                            if (bullets[0] != null && bullets[0].isHitShields()) {
+                            if (bullets[0] != null && bullets[0].isHitShields()) {  // hit shields erase
                                 bullets[0]=null;
 
                             }
@@ -899,7 +916,9 @@ public class Rocket extends JFrame {
                             bullets[0]= new Bullet(gun.getX()+8,gun.getY());
                         }
 
+                        //bullets craft
                         for (int i = 1; i < bullets.length; i++) {
+                            // bullet collides with gun
                             if (bullets[i] != null) {
                                 bullets[i].setY(bullets[i].getY()+6);
                                 if (gun.collision(bullets[i].getX(), bullets[i].getY())) {
@@ -907,19 +926,20 @@ public class Rocket extends JFrame {
                                     shipCount--;
                                     bullets[i] = null;
                                 }
-                                if (bullets[i] != null && bullets[i].isHitShields()) {
+                                if (bullets[i] != null && bullets[i].isHitShields()) {  //erase if hit shields
                                     bullets[i]=null;
 
                                 }
-                            } else {
+                            } else {    //spare bullet initialise from available craft
                                 Craft naughtyOne = pointOfFire.get((int)(Math.random()*(pointOfFire.size()-1)));
                                 bullets[i] = new Bullet(naughtyOne.getX()+8,naughtyOne.getY());
                             }
-                            if (bullets[i] != null && bullets[i].getY() >= height) {
+                            if (bullets[i] != null && bullets[i].getY() >= height) {    //erase if beyond window
                                 bullets[i] = null;
                             }
 
                         }
+                        // enemy collides with gun.
                         for (int i = 0; i < pointOfFire.size(); i++) {
                             if (gun.collision(pointOfFire.get(i).getX(), pointOfFire.get(i).getY())) {
                                 explosion = new Explosion(pointOfFire.get(i).getX(), pointOfFire.get(i).getY());
@@ -927,10 +947,10 @@ public class Rocket extends JFrame {
                                 break;
                             }
                         }
-                        clearedLevel  = pointOfFire.size() == 0;
+                        clearedLevel  = pointOfFire.size() == 0;    //no craft then cleared level
                         if (pointOfFire.size() > 0)
                             for(Craft craft : pointOfFire) {
-                                if (craft.getY() >= 500) {
+                                if (craft.getY() >= height) {   //terminate game if enemy craft reach bottom
                                     shipCount = 0;
                                     break;
                                 }
@@ -940,19 +960,19 @@ public class Rocket extends JFrame {
                             if(mysteryCraft == null) {
                                 mysteryCraft = new Craft(CraftEnum.MYSTERY, 500, 60);
                             } else {
-                                if (mysteryCraft.getX() <= 50) {
+                                if (mysteryCraft.getX() <= 50) {    //animate
                                     mysteryDirection = 6;
                                 }
                                 mysteryCraft.setX(mysteryCraft.getX() + mysteryDirection);
                                 if (bullets[0] != null && mysteryCraft.collision(bullets[0].getX(), bullets[0].getY())) {
-                                    score += (int)(Math.random() * 500.0);
+                                    score += (int)(Math.random() * 500.0);  // hit the bonus craft
                                     explosion = new Explosion(bullets[0].getX(), bullets[0].getY());
                                     bullets[0] = null;
                                     mysteryCraft = null;
                                     mysteryDirection = -6;
 
                                 }
-                                if (mysteryCraft != null && mysteryCraft.getX() >= 550){
+                                if (mysteryCraft != null && mysteryCraft.getX() >= 550){    //create new craft at random time
                                     mystery = (int)(Math.random() * 500.0);
                                     mysteryCraft = null;
                                     mysteryDirection = -6;
@@ -965,9 +985,9 @@ public class Rocket extends JFrame {
                         } catch (InterruptedException e) {
                             // e.printStackTrace();
                         }
-                        repaint();
+                        repaint();  //refresh screen
                     }
-                    if (clearedLevel) {
+                    if (clearedLevel) { //next go
                         int tempScore = score;
                         int tempLives = shipCount;
                         init();
@@ -978,36 +998,36 @@ public class Rocket extends JFrame {
                     }
                 } while (shipCount > 0 && clearedLevel);
 
-                frameCount++;
+                frameCount++;   //outside the game
                 if (frameCount < 49)
                     screen = GAME_OVER;
-                else if (frameCount > 50 &&  frameCount < 500) {
+                else if (frameCount > 50 &&  frameCount < 500) {    //enter the high score
                     screen = POPUP;
                     if (score > hiscore) {
                         this.hi.setVisible(true);
                     }else {
-                        frameCount = 501;
+                        frameCount = 501; //skip high score entry
                     }
                 }
-                else if (frameCount== 500) {
+                else if (frameCount== 500) {    //confirm
                     if(score > hiscore)this.hi.actionPerformed(null);
                     else this.hi.setVisible(false);
                 }
-                else if (frameCount > 500 && frameCount < 750) {
+                else if (frameCount > 500 && frameCount < 750) {    //display table
                     screen = HIGH_SCORE;
 
                 }
-                else if (frameCount > 750){
+                else if (frameCount > 750){     //restart the game
                     frameCount = 0;
                     init();
                     tick=40;
                 }
                 try {
-                    this.sleep(40);
+                    this.sleep(40);     //25 frames a second
                 } catch (InterruptedException e) {
                     // e.printStackTrace();
                 }
-                if (screen != POPUP)repaint();
+                if (screen != POPUP)repaint();  //don't repaint when you are entering your name
             }
         }
 
@@ -1024,7 +1044,7 @@ public class Rocket extends JFrame {
      * @return
      */
     private Craft collision(int x, int y) {
-        //draw fodder
+        //scan the aliens for a collision
         for (int row = fodder.length - 1; row >= 0; row--) {
             for (int i = 0; i < fodder[row].length; i++) {
                 if(fodder[row][i].getIsDisplayed() && fodder[row][i].collision((double)x,(double)y)){
@@ -1041,7 +1061,7 @@ public class Rocket extends JFrame {
      * 
      * @param args
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) {    //set everything going
         Rocket app = new Rocket();
         Container cp = app.getContentPane();
         MyThread mythread = app.new MyThread();

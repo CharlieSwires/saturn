@@ -597,9 +597,9 @@ public class Rocket extends JFrame {
             this.y = y;
         }
         public boolean collision(double x, double y) {
-            double rsqr = (this.x+ SCALE_X / 2.0 - x)*(this.x+ SCALE_X / 2.0 - x)+
-                    (this.y+ SCALE_Y / 2.0 - y)*(this.y+ SCALE_Y / 2.0 - y);
-            return rsqr <= (SCALE_X/2.0)*(SCALE_X/2.0);
+            double rsqr = (this.x+ FODDER_WIDTH / 2.0 - x)*(this.x+ FODDER_WIDTH / 2.0 - x)+
+                    (this.y+ FODDER_HEIGHT / 2.0 - y)*(this.y+ FODDER_HEIGHT / 2.0 - y);
+            return rsqr <= (FODDER_WIDTH/2.0)*(FODDER_WIDTH/2.0);
         }
         public void draw(Graphics g) {
             if(bi != null) {

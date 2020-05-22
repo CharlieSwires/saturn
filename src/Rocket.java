@@ -492,7 +492,7 @@ public class Rocket extends JFrame {
                             FODDER_WIDTH, FODDER_HEIGHT, null);
                     if (background != null) {
                         Graphics g2 = background.getGraphics();
-                        c = Color.BLACK;
+                        c = Color.BLACK;    //eat shields
                         if (g2 != null) {
                             g2.setColor(c);
                             g2.fillRect(this.getX(), this.getY(), 

@@ -16,6 +16,8 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -221,92 +223,59 @@ public class Rocket extends JFrame {
      */
     class HiScores {
 
-        /**
-         * 
-         */
         private static final long serialVersionUID = 1;
         private List<ScoreName> last10Hiscores;
 
         public void load() throws IOException, ClassNotFoundException {
-            File scores = new File("scores.bin");
-            FileInputStream is = new FileInputStream(scores);
-            int b;
-            byte[] bs = new byte[1];
-            int index = 0;
-            Random generator = new Random(73890);
-            while( (b = is.read()) != -1) {
-                bs[index] = (byte)(0xff & (b ^ ( (int)(generator.nextDouble() * 255.0))));
-                index++;
-                byte[] temp = new byte[index+1];
-                int index2 = 0;
-                for(byte tb : bs) {
-                    temp[index2++]=tb;
-                }
-                bs = new byte[index+1];
-                int i = 0;
-                for(byte tb : temp) {
-                    bs[i++] = tb;
-                }
-            }
-            is.close();
-
-            byte[] temp = new byte[--index+1];
-            int index2 = 0;
-
-            for(@SuppressWarnings("unused") byte tb : temp) {
-                temp[index2]=bs[index2++];
-            }
-
-            setLast10Hiscores(deserialize(temp));
-        }
-        List<ScoreName> deserialize(byte[] temp) {
-            char[] chars = new char[temp.length];
-            int index = 0;
-            for(@SuppressWarnings("unused") char c : chars) {
-                chars[index] = (char) temp[index++];
-            }
-            String fred = String.copyValueOf(chars);
-            String[] rows = fred.split("],");
-            List<ScoreName> list = new ArrayList<>();
-            for (String row : rows) {
-                String cleaned = row.replace("ScoreName [", "");
-                String[] pair = cleaned.split(", ");
-                String score = pair[0].split("=")[1];
-                String name = pair[1].split("=")[1].replace("]]", "");
-                ScoreName sn = new ScoreName();
-                sn.name = name;
-                sn.score = Integer.parseInt(score);
-                list.add(sn);
-            }
-            return list;
+            byte[] bytes = Files.readAllBytes(Paths.get("scores.bin"));
+            transform(bytes);
+            setLast10Hiscores(deserialize(bytes));
         }
 
         public void save() throws IOException {
-            byte[] bs = serialize(last10Hiscores);
-            byte[] temp = new byte[bs.length];
-            int index = 0;
+            byte[] bytes = serialize(last10Hiscores);
+            transform(bytes);
+            Files.write(Paths.get("scores.bin"), bytes);
+        }
+
+        // Applying the same XOR sequence twice restores the original bytes.
+        private void transform(byte[] bytes) {
             Random generator = new Random(73890);
-            while(index < bs.length) {
-                temp[index] = (byte)(0xff & (bs[index++] ^ ((int)(generator.nextDouble() * 255.0))));
 
-            } 
-
-            File scores = new File("scores.bin");
-            FileOutputStream os = new FileOutputStream(scores);
-            index = 0;
-            while(index < temp.length) {
-                os.write(temp[index++]);
+            for (int i = 0; i < bytes.length; i++) {
+                int mask = (int) (generator.nextDouble() * 255.0);
+                bytes[i] = (byte) (bytes[i] ^ mask);
             }
-            os.flush();
-            os.close();
+        }
 
+        List<ScoreName> deserialize(byte[] bytes) {
+            char[] chars = new char[bytes.length];
+
+            for (int i = 0; i < bytes.length; i++) {
+                chars[i] = (char) bytes[i];
+            }
+
+            List<ScoreName> list = new ArrayList<>();
+
+            for (String row : new String(chars).split("],")) {
+                String[] pair = row.replace("ScoreName [", "").split(", ");
+
+                ScoreName entry = new ScoreName();
+                entry.score = Integer.parseInt(pair[0].split("=")[1]);
+                entry.name = pair[1].split("=")[1].replace("]]", "");
+
+                list.add(entry);
+            }
+
+            return list;
         }
 
         byte[] serialize(List<ScoreName> last10Hiscores) {
             return last10Hiscores.toString().getBytes();
         }
+
         public List<ScoreName> getLast10Hiscores() {
-            return this.last10Hiscores;
+            return last10Hiscores;
         }
 
         public void setLast10Hiscores(List<ScoreName> last10Hiscores) {

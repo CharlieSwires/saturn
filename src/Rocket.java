@@ -13,8 +13,6 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -223,7 +221,6 @@ public class Rocket extends JFrame {
      */
     class HiScores {
 
-        private static final long serialVersionUID = 1;
         private List<ScoreName> last10Hiscores;
 
         public void load() throws IOException, ClassNotFoundException {

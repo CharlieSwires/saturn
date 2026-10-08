@@ -1,7 +1,10 @@
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Container;
+import java.awt.Font;
 import java.awt.Graphics;
+import java.awt.Graphics2D;
+import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
@@ -60,6 +63,8 @@ public class Rocket extends JFrame {
     private static final int NOMINAL = 1;
     private static final int POPUP = 4;
     private int screen = NOMINAL;
+    private final SoundEffects sounds = new SoundEffects();
+    private final FrameRenderer frameRenderer = new FrameRenderer();
     BufferedImage buffer = new BufferedImage(width,height,BufferedImage.TYPE_INT_RGB);
     Craft[][] fodder;
     Shield[] shields;
@@ -100,6 +105,7 @@ public class Rocket extends JFrame {
         init();
         addWindowListener(new WindowAdapter() {
             public void windowClosing(WindowEvent e) {
+                sounds.close();
                 System.exit(0);
             }
         });
@@ -131,6 +137,7 @@ public class Rocket extends JFrame {
 
             @Override
             public void keyReleased(KeyEvent e) {
+                if (e.getKeyCode() == KeyEvent.VK_M) sounds.toggleMute();
                 if (e.getKeyChar() == 'a'||e.getKeyChar() == 'A') {
                     gunDirectionA = 0;
                 }
@@ -268,7 +275,7 @@ public class Rocket extends JFrame {
                 String name = pair[1].split("=")[1].replace("]]", "");
                 ScoreName sn = new ScoreName();
                 sn.name = name;
-                sn.score = new Integer(score);
+                sn.score = Integer.parseInt(score);
                 list.add(sn);
             }
             return list;
@@ -691,6 +698,12 @@ public class Rocket extends JFrame {
      * Called each frame refresh to draw everything. Double buffered.
      * 
      */
+    @Override
+    public void update(Graphics g) {
+        paint(g);
+    }
+
+    @Override
     public void paint(Graphics g) {
         Graphics screengc = null;
 
@@ -754,9 +767,6 @@ public class Rocket extends JFrame {
 
                 c = Color.WHITE;
                 g.setColor(c);
-                g.drawString("Score: "+score, width /2 -70, 50);
-                g.drawString("High Score: "+hiscore, width /2+50, 50);
-                g.drawString("Lives: "+shipCount, width /2-50, height -20);
 
                 break;
             case GAME_OVER:
@@ -766,7 +776,6 @@ public class Rocket extends JFrame {
                 g.fillRect(0, 0, width, height);
                 c = Color.WHITE;
                 g.setColor(c);
-                g.drawString("GAME OVER", width /2 -50, height /2);
                 break;
             case HIGH_SCORE:
                 c = Color.BLACK;
@@ -775,16 +784,10 @@ public class Rocket extends JFrame {
                 g.fillRect(0, 0, width, height);
                 c = Color.WHITE;
                 g.setColor(c);
-                g.drawString("HI SCORES", width /2 -40, 70);
 
                 for (int i = 0; i < 10;i++) {
                     g.drawLine(width /2 -100, i * 30 + 100,width /2 +100, i * 30 + 100);
-                    int lastFirst = last10Hiscores != null && last10Hiscores.size() > 0 ? last10Hiscores.size() - i -1:0;
-                    if (last10Hiscores != null && last10Hiscores.size() > 0 && lastFirst >= 0 && last10Hiscores.get(lastFirst) != null) {
-                        ScoreName sn = last10Hiscores.get(lastFirst);
-                        g.drawString(""+sn.score, width /2 -60, i * 30 + 90);
-                        g.drawString(""+sn.name, width /2, i * 30 + 90);
-                    } 
+
                 }
                 break;
             case POPUP:
@@ -794,7 +797,8 @@ public class Rocket extends JFrame {
                 throw new InvalidParameterException("screen= "+screen);
             }
 
-            screengc.drawImage(buffer, 0, 0, null);
+            g.dispose();
+            frameRenderer.draw((Graphics2D) screengc, buffer, this::drawText);
         }
     }
     /**
@@ -803,6 +807,43 @@ public class Rocket extends JFrame {
      * @author charl
      *
      */
+    /** Draw smooth text into the display-resolution composite frame. */
+    private void drawText(Graphics graphics) {
+        Graphics2D text = (Graphics2D) graphics.create();
+        try {
+            text.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+                    RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            text.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS,
+                    RenderingHints.VALUE_FRACTIONALMETRICS_ON);
+            text.setFont(new Font(Font.DIALOG, Font.PLAIN, 14));
+            text.setColor(Color.WHITE);
+            switch (screen) {
+            case NOMINAL:
+                text.drawString("Score: " + score, width / 2 - 70, 50);
+                text.drawString("High Score: " + hiscore, width / 2 + 50, 50);
+                text.drawString("Lives: " + shipCount, width / 2 - 50, height - 20);
+                break;
+            case GAME_OVER:
+                text.drawString("GAME OVER", width / 2 - 50, height / 2);
+                break;
+            case HIGH_SCORE:
+                text.drawString("HI SCORES", width / 2 - 40, 70);
+                for (int i = 0; i < 10 && i < last10Hiscores.size(); i++) {
+                    ScoreName sn = last10Hiscores.get(last10Hiscores.size() - i - 1);
+                    if (sn != null) {
+                        text.drawString("" + sn.score, width / 2 - 60, i * 30 + 90);
+                        text.drawString("" + sn.name, width / 2, i * 30 + 90);
+                    }
+                }
+                break;
+            default:
+                break;
+            }
+        } finally {
+            text.dispose();
+        }
+    }
+
     class HiScorePanel extends JPanel implements ActionListener{
         /**
          * 
@@ -866,7 +907,11 @@ public class Rocket extends JFrame {
                     int mystery = (int)(Math.random() * 500.0);
                     int mysteryDirection = -6;
                     mysteryCraft = null;
+                    int soundTick = 0;
                     while(shipCount > 0 && !clearedLevel) {
+                        if (soundTick++ % 8 == 0) sounds.play(SoundEffects.Effect.MARCH);
+                        if (mysteryCraft != null && soundTick % 5 == 0)
+                            sounds.play(SoundEffects.Effect.BONUS);
                         position += right;
                         if (position >= 150) {  //zig zag
                             right = -(int)speed;
@@ -900,20 +945,23 @@ public class Rocket extends JFrame {
                         if (bullets[0] != null) {
                             bullets[0].setY(bullets[0].getY() - 6);
                             Craft hit = collision(bullets[0].getX(), bullets[0].getY());    //hit enemy
-                            if (bullets[0].getY() <= 10) {  //top erase
+                            if (hit == null && bullets[0].getY() <= 10) {  //top erase
                                 bullets[0] = null;
                             }
                             if (hit != null) {  //hit true set off explosion
+                                sounds.play(SoundEffects.Effect.EXPLOSION);
                                 score += hit.getCraftType().getValue();
                                 explosion = new Explosion(bullets[0].getX(), bullets[0].getY());
                                 bullets[0]=null;
                             }
                             if (bullets[0] != null && bullets[0].isHitShields()) {  // hit shields erase
+                                sounds.play(SoundEffects.Effect.SHIELD_HIT);
                                 bullets[0]=null;
 
                             }
                         } else if (fire) {
                             bullets[0]= new Bullet(gun.getX()+8,gun.getY());
+                            sounds.play(SoundEffects.Effect.SHOT);
                         }
 
                         //bullets craft
@@ -923,16 +971,19 @@ public class Rocket extends JFrame {
                                 bullets[i].setY(bullets[i].getY()+6);
                                 if (gun.collision(bullets[i].getX(), bullets[i].getY())) {
                                     explosion = new Explosion(bullets[i].getX(), bullets[i].getY());
+                                    sounds.play(SoundEffects.Effect.PLAYER_HIT);
                                     shipCount--;
                                     bullets[i] = null;
                                 }
                                 if (bullets[i] != null && bullets[i].isHitShields()) {  //erase if hit shields
+                                    sounds.play(SoundEffects.Effect.SHIELD_HIT);
                                     bullets[i]=null;
 
                                 }
-                            } else {    //spare bullet initialise from available craft
+                            } else if (!pointOfFire.isEmpty()) {    //spare bullet initialise from available craft
                                 Craft naughtyOne = pointOfFire.get((int)(Math.random()*(pointOfFire.size()-1)));
                                 bullets[i] = new Bullet(naughtyOne.getX()+8,naughtyOne.getY());
+                                sounds.play(SoundEffects.Effect.ENEMY_SHOT);
                             }
                             if (bullets[i] != null && bullets[i].getY() >= height) {    //erase if beyond window
                                 bullets[i] = null;
@@ -943,6 +994,7 @@ public class Rocket extends JFrame {
                         for (int i = 0; i < pointOfFire.size(); i++) {
                             if (gun.collision(pointOfFire.get(i).getX(), pointOfFire.get(i).getY())) {
                                 explosion = new Explosion(pointOfFire.get(i).getX(), pointOfFire.get(i).getY());
+                                sounds.play(SoundEffects.Effect.PLAYER_HIT);
                                 shipCount--;
                                 break;
                             }
@@ -965,6 +1017,7 @@ public class Rocket extends JFrame {
                                 }
                                 mysteryCraft.setX(mysteryCraft.getX() + mysteryDirection);
                                 if (bullets[0] != null && mysteryCraft.collision(bullets[0].getX(), bullets[0].getY())) {
+                                    sounds.play(SoundEffects.Effect.BONUS_HIT);
                                     score += (int)(Math.random() * 500.0);  // hit the bonus craft
                                     explosion = new Explosion(bullets[0].getX(), bullets[0].getY());
                                     bullets[0] = null;
@@ -987,7 +1040,8 @@ public class Rocket extends JFrame {
                         }
                         repaint();  //refresh screen
                     }
-                    if (clearedLevel) { //next go
+                    if (clearedLevel && shipCount > 0) { //next go
+                        sounds.play(SoundEffects.Effect.LEVEL_UP);
                         int tempScore = score;
                         int tempLives = shipCount;
                         init();
@@ -998,6 +1052,7 @@ public class Rocket extends JFrame {
                     }
                 } while (shipCount > 0 && clearedLevel);
 
+                if (frameCount == 0) sounds.play(SoundEffects.Effect.GAME_OVER);
                 frameCount++;   //outside the game
                 if (frameCount < 49)
                     screen = GAME_OVER;

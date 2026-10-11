@@ -1,3 +1,8 @@
+/*==========================================================================
+Copyright © 2026 Charlie's Tenacity Ltd. All rights reserved.
+
+This source code is proprietary and confidential. Unauthorised copying, modification, distribution or use is prohibited.
+============================================================================*/
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.geom.AffineTransform;

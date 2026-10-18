@@ -13,7 +13,6 @@ import java.awt.RenderingHints;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.awt.event.KeyListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
@@ -67,7 +66,7 @@ public class Rocket extends JFrame {
     private static final int HIGH_SCORE = 3;
     private static final int NOMINAL = 1;
     private static final int POPUP = 4;
-    private int screen = NOMINAL;
+    private volatile int screen = NOMINAL;
     private final SoundEffects sounds = new SoundEffects();
     private final FrameRenderer frameRenderer = new FrameRenderer();
     BufferedImage buffer = new BufferedImage(width,height,BufferedImage.TYPE_INT_RGB);
@@ -76,8 +75,8 @@ public class Rocket extends JFrame {
     Gun gun;
     Bullet[] bullets;
     int selected = 0;
-    int gunDirection = 0;
-    protected boolean fire = false;
+    volatile int gunDirection = 0;
+    protected volatile boolean fire = false;
     Explosion explosion = null;
     List<Craft> pointOfFire;
     private int shipCount = 3;
@@ -118,52 +117,59 @@ public class Rocket extends JFrame {
             }
         });
 
-        addKeyListener(new KeyListener() {
-
-            @Override
-            public void keyTyped(KeyEvent e) {
-
-
+        installGameKeys(getRootPane());
+        addWindowFocusListener(new WindowAdapter() {
+            @Override public void windowLostFocus(WindowEvent event) {
+                resetControls();
             }
-
-            @Override
-            public void keyPressed(KeyEvent e) {
-                if (e.getKeyChar() == 'a'||e.getKeyChar() == 'A') {
-                    gunDirectionA = -3;
-                }
-                if (e.getKeyChar() == 'd'||e.getKeyChar() == 'D') {
-                    gunDirectionD = 3;
-
-                }
-                gunDirection = gunDirectionA + gunDirectionD;
-                if (e.getKeyChar() == ' ') {
-                    fire  = true;
-
-                }
-
-            }
-
-            @Override
-            public void keyReleased(KeyEvent e) {
-                if (e.getKeyCode() == KeyEvent.VK_M) sounds.toggleMute();
-                if (e.getKeyChar() == 'a'||e.getKeyChar() == 'A') {
-                    gunDirectionA = 0;
-                }
-                if (e.getKeyChar() == 'd'||e.getKeyChar() == 'D') {
-                    gunDirectionD = 0;
-
-                }
-                gunDirection = gunDirectionA + gunDirectionD;
-                if (e.getKeyChar() == ' ') {
-                    fire = false;
-
-                }
-
-
-            }
-
         });
     }
+
+    /** Window-wide bindings keep working after the score form has taken focus. */
+    void installGameKeys(javax.swing.JRootPane root) {
+        bindGameKey(root, "pressed A", () -> { gunDirectionA = -3; updateDirection(); });
+        bindGameKey(root, "released A", () -> { gunDirectionA = 0; updateDirection(); });
+        bindGameKey(root, "pressed D", () -> { gunDirectionD = 3; updateDirection(); });
+        bindGameKey(root, "released D", () -> { gunDirectionD = 0; updateDirection(); });
+        bindGameKey(root, "pressed SPACE", () -> fire = true);
+        bindGameKey(root, "released SPACE", () -> fire = false);
+        bindGameKey(root, "released M", () -> sounds.toggleMute());
+    }
+
+    private void bindGameKey(javax.swing.JRootPane root, String key, Runnable command) {
+        javax.swing.Action action = new javax.swing.AbstractAction() {
+            @Override public boolean isEnabled() { return screen == NOMINAL; }
+            @Override public void actionPerformed(ActionEvent event) {
+                if (isEnabled()) command.run();
+            }
+        };
+        for (int modifiers : new int[] {0, KeyEvent.SHIFT_DOWN_MASK}) {
+            javax.swing.KeyStroke plain = javax.swing.KeyStroke.getKeyStroke(key);
+            javax.swing.KeyStroke stroke = javax.swing.KeyStroke.getKeyStroke(
+                    plain.getKeyCode(), modifiers, plain.isOnKeyRelease());
+            root.getInputMap(javax.swing.JComponent.WHEN_IN_FOCUSED_WINDOW).put(stroke, key);
+        }
+        root.getActionMap().put(key, action);
+    }
+
+    private void updateDirection() {
+        gunDirection = gunDirectionA + gunDirectionD;
+    }
+
+    private void resetControls() {
+        gunDirectionA = 0;
+        gunDirectionD = 0;
+        gunDirection = 0;
+        fire = false;
+    }
+
+    private void restoreGameFocus() {
+        javax.swing.SwingUtilities.invokeLater(() -> {
+            resetControls();
+            requestFocusInWindow();
+        });
+    }
+
     /**
      * Used every game cycle sets up prey, predator and shields
      */
@@ -884,6 +890,7 @@ public class Rocket extends JFrame {
         public void actionPerformed(ActionEvent e) {
             recordScore(nameString.getText());
             setVisible(false);
+            restoreGameFocus();
 
         }
     }
@@ -1061,7 +1068,11 @@ public class Rocket extends JFrame {
                         frameCount = 501;
                         screen = HIGH_SCORE;
                     } else if (frameCount == 51) {
-                        javax.swing.SwingUtilities.invokeLater(() -> hi.setVisible(true));
+                        javax.swing.SwingUtilities.invokeLater(() -> {
+                            resetControls();
+                            hi.setVisible(true);
+                            nameString.requestFocusInWindow();
+                        });
                     }
                 }
                 else if (frameCount == 500) {    //confirm once, on the Swing event thread
@@ -1079,6 +1090,7 @@ public class Rocket extends JFrame {
                 else if (frameCount > 750){     //restart the game
                     frameCount = 0;
                     init();
+                    restoreGameFocus();
                     tick=40;
                 }
                 try {

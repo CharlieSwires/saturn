@@ -161,3 +161,12 @@ ten entries exist, every completed game's score qualifies.
 
 Existing `scores.bin` data and its XOR encoding remain compatible. Entries are
 sorted when loaded. This copy-over update does not replace your saved scores.
+
+## Keyboard focus after high-score entry
+
+Gameplay uses window-level key bindings so A, D and Space continue working
+when the next game starts after entering a high score. Game bindings are disabled
+on the score/name-entry screens so names can be typed normally. Shift+A/D are
+also supported. Controls reset when the window loses focus to avoid stuck
+movement or firing after switching applications. Focus is restored after name
+entry and on game restart.

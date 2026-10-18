@@ -83,7 +83,8 @@ public class Rocket extends JFrame {
     private int shipCount = 3;
     private int score = 0;
     private int hiscore = 0;
-    private List<ScoreName> last10Hiscores = new ArrayList<>();
+    private volatile List<ScoreName> last10Hiscores = new ArrayList<>();
+    private volatile boolean scoreRecorded;
     private int frameCount = 0;
     private JLabel name = new JLabel("Name:");
     private JTextField nameString = new JTextField("Charlie Swires");
@@ -103,7 +104,9 @@ public class Rocket extends JFrame {
             HiScores george = new HiScores();
             george.load();
             this.last10Hiscores = george.getLast10Hiscores();
-            hiscore = this.last10Hiscores.get(this.last10Hiscores.size() - 1).score;
+            this.last10Hiscores = rankedScores(this.last10Hiscores);
+            hiscore = this.last10Hiscores.isEmpty() ? 0
+                    : this.last10Hiscores.get(this.last10Hiscores.size() - 1).score;
         } catch (ClassNotFoundException | IOException | SecurityException  | IllegalArgumentException e1) {
             System.out.println(e1.getMessage());
         }
@@ -182,6 +185,7 @@ public class Rocket extends JFrame {
         gunDirectionD = 0;
 
         score = 0;
+        scoreRecorded = false;
         //5rows x 11 columns
         int row = 0;
         for(int i = 0;i < fodder[row].length;i++) {
@@ -815,6 +819,50 @@ public class Rocket extends JFrame {
         }
     }
 
+    /** Returns an ascending copy containing only the best ten scores. */
+    static List<ScoreName> rankedScores(List<ScoreName> scores) {
+        List<ScoreName> ranked = new ArrayList<>(scores);
+        ranked.sort((a, b) -> Integer.compare(a.score, b.score));
+        while (ranked.size() > 10) ranked.remove(0);
+        return ranked;
+    }
+
+    static boolean qualifiesForTable(List<ScoreName> scores, int candidate) {
+        return scores.size() < 10 || candidate > scores.get(0).score;
+    }
+
+    /** Inserts below existing equal scores when displayed highest first. */
+    static List<ScoreName> insertRankedScore(List<ScoreName> scores, ScoreName entry) {
+        List<ScoreName> ranked = rankedScores(scores);
+        if (!qualifiesForTable(ranked, entry.score)) return ranked;
+        int index = 0;
+        while (index < ranked.size() && ranked.get(index).score < entry.score) index++;
+        ranked.add(index, entry);
+        if (ranked.size() > 10) ranked.remove(0);
+        return ranked;
+    }
+
+    private boolean qualifiesForHighScore() {
+        return !scoreRecorded && qualifiesForTable(last10Hiscores, score);
+    }
+
+    private synchronized void recordScore(String playerName) {
+        if (!qualifiesForHighScore()) return;
+        ScoreName entry = new ScoreName();
+        entry.score = score;
+        entry.name = playerName;
+        last10Hiscores = insertRankedScore(last10Hiscores, entry);
+        hiscore = last10Hiscores.get(last10Hiscores.size() - 1).score;
+        scoreRecorded = true; // Select and the timeout must not save the same game twice.
+        HiScores table = new HiScores();
+        table.setLast10Hiscores(last10Hiscores);
+        try {
+            table.save();
+        } catch (IOException ex) {
+            ex.printStackTrace();
+        }
+    }
+
     class HiScorePanel extends JPanel implements ActionListener{
         /**
          * 
@@ -834,27 +882,7 @@ public class Rocket extends JFrame {
 
         @Override
         public void actionPerformed(ActionEvent e) {
-            if (score > hiscore) {
-                hiscore = score;
-                ScoreName sn = new ScoreName();
-                sn.score = hiscore;
-                sn.name = nameString.getText();
-                if (last10Hiscores.size() < 10) {
-
-                    last10Hiscores.add(sn);
-                } else {
-                    last10Hiscores.remove(0);
-                    last10Hiscores.add(sn);
-
-                } 
-                HiScores george = new HiScores();
-                george.setLast10Hiscores(last10Hiscores);;
-                try {
-                    george.save();
-                } catch (IOException e1) {
-                    e1.printStackTrace();
-                }
-            }
+            recordScore(nameString.getText());
             setVisible(false);
 
         }
@@ -1029,15 +1057,20 @@ public class Rocket extends JFrame {
                     screen = GAME_OVER;
                 else if (frameCount > 50 &&  frameCount < 500) {    //enter the high score
                     screen = POPUP;
-                    if (score > hiscore) {
-                        this.hi.setVisible(true);
-                    }else {
-                        frameCount = 501; //skip high score entry
+                    if (scoreRecorded || !qualifiesForHighScore()) {
+                        frameCount = 501;
+                        screen = HIGH_SCORE;
+                    } else if (frameCount == 51) {
+                        javax.swing.SwingUtilities.invokeLater(() -> hi.setVisible(true));
                     }
                 }
-                else if (frameCount== 500) {    //confirm
-                    if(score > hiscore)this.hi.actionPerformed(null);
-                    else this.hi.setVisible(false);
+                else if (frameCount == 500) {    //confirm once, on the Swing event thread
+                    try {
+                        javax.swing.SwingUtilities.invokeAndWait(() -> hi.actionPerformed(null));
+                    } catch (Exception ex) {
+                        throw new RuntimeException(ex);
+                    }
+                    screen = HIGH_SCORE;
                 }
                 else if (frameCount > 500 && frameCount < 750) {    //display table
                     screen = HIGH_SCORE;
@@ -1091,7 +1124,6 @@ public class Rocket extends JFrame {
         Rocket app = new Rocket();
         Container cp = app.getContentPane();
         MyThread mythread = app.new MyThread();
-        mythread.start();
         app.setSize(width, height);
         app.setTitle("Rockets");
         app.setVisible(true);
@@ -1100,6 +1132,7 @@ public class Rocket extends JFrame {
         hi.setSize(300, 200);
         hi.setVisible(false);
         cp.add(hi);
+        mythread.start();
     }
 
 }

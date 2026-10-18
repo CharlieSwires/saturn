@@ -146,3 +146,18 @@ images or saved scores.
 - [OpenJDK downloads](https://jdk.java.net/)
 - [OpenJDK project](https://openjdk.org/)
 - [Git downloads](https://git-scm.com/downloads)
+
+## Ranked high-score table
+
+At game over, any score that qualifies for the best ten can be entered, even if
+it does not beat the highest score. Enter your name and click **select**; the
+existing timeout also accepts the current name. Each game is recorded once.
+
+Scores appear highest first. New entries are inserted between their neighbours;
+the lowest entry drops out when the table exceeds ten. A new tied score appears
+below existing equal scores. A full table requires beating its lowest score;
+an equal score at the cutoff does not displace an existing entry. If fewer than
+ten entries exist, every completed game's score qualifies.
+
+Existing `scores.bin` data and its XOR encoding remain compatible. Entries are
+sorted when loaded. This copy-over update does not replace your saved scores.
